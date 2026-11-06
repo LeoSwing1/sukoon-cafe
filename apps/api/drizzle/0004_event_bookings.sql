@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS event_bookings (
+ id serial PRIMARY KEY,
+ booking_number varchar(40) NOT NULL UNIQUE,
+ event_type varchar(40) NOT NULL,
+ event_date date NOT NULL,
+ event_time varchar(30) NOT NULL,
+ guest_count integer NOT NULL CHECK(guest_count > 0),
+ customer_name varchar(120) NOT NULL,
+ customer_phone varchar(30) NOT NULL,
+ customer_email varchar(255),
+ budget_paise integer NOT NULL DEFAULT 0,
+ venue_preference varchar(30) NOT NULL DEFAULT 'CAFE',
+ decoration_package varchar(80),
+ food_package varchar(80),
+ cake_cutting boolean NOT NULL DEFAULT false,
+ music_package varchar(80),
+ dj_required boolean NOT NULL DEFAULT false,
+ special_requests text,
+ booking_status varchar(30) NOT NULL DEFAULT 'ENQUIRY',
+ quoted_amount_paise integer NOT NULL DEFAULT 0,
+ advance_amount_paise integer NOT NULL DEFAULT 0,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS event_bookings_date_idx ON event_bookings(event_date);

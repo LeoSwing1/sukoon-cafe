@@ -1,0 +1,25 @@
+{
+  "name": "sukoon-cafe",
+  "private": true,
+  "version": "2.4.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace @sukoon/api run dev",
+    "dev:web": "npm --workspace @sukoon/web run dev",
+    "build": "npm run build --workspaces --if-present",
+    "db:generate": "npm --workspace @sukoon/api run db:generate",
+    "db:migrate": "npm --workspace @sukoon/api run db:migrate",
+    "db:seed": "npm --workspace @sukoon/api run db:seed",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:fix-local-auth": "fix-local-db.cmd"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
