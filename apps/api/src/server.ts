@@ -1,7 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
+import helmetModule from "helmet";
+
+const helmet = helmetModule as unknown as () => express.RequestHandler;
 import { menuRouter, categoriesRouter } from "./routes/menu.js";
 import { ordersRouter } from "./routes/orders.js";
 import { authRouter } from "./routes/auth.js";

@@ -1,0 +1,38 @@
+
+> @sukoon/web@1.5.1 build
+> next build
+
+   ▲ Next.js 15.5.29
+   - Environments: .env
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./src/app/admin/page.tsx
+Error:   [31mx[0m Expected ';', got 'trend'
+   ,-[[36;1;4mC:\CURRENT-PROJECTS\sukoon-cafe\apps\web\src\app\admin\page.tsx[0m:6:1]
+ [2m3[0m | import {Activity,ArrowDownRight,ArrowUpRight,Coffee,Package,ReceiptText,RefreshCw,ShoppingBag,Tag,Users,Wallet} from "lucide-react";
+ [2m4[0m | const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+ [2m5[0m | const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format((n||0)/100);
+ [2m6[0m | type Dash={summary:{orders:number;paid_sales:number;gross_sales:number;tax_collected:number;active_orders:number;demo_orders:number}trend:{day:string;date:string;sales:number;orders:number}[];sources:{source:string;orders:number;sales:number}[];topItems:{name:string;quantity:number;sales:number}[];lowStock:number;monthExpenses:number;activePromotions:number;estimatedCogs:number;estimatedGrossProfit:number;salesGrowthPct:number|null;previousWeekSales:number};
+   : [35;1m                                                                                                                                    ^^^^^[0m
+ [2m7[0m | type Order={id:number;orderNumber:string;source:string;status:string;totalPaise:number;paymentStatus:string;createdAt:string;externalPlatformOrderId?:string|null};
+ [2m8[0m | export default function AdminPage(){
+ [2m9[0m |  const [dash,setDash]=useState<Dash|null>(null),[orders,setOrders]=useState<Order[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);
+   `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/page.tsx
+
+
+> Build failed because of webpack errors
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\CURRENT-PROJECTS\sukoon-cafe\apps\web
+npm error workspace @sukoon/web@1.5.1
+npm error location C:\CURRENT-PROJECTS\sukoon-cafe\apps\web
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c next build
