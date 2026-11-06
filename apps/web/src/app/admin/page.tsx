@@ -3,7 +3,7 @@ import {useCallback,useEffect,useState} from "react";
 import {Activity,ArrowDownRight,ArrowUpRight,Coffee,Package,ReceiptText,RefreshCw,ShoppingBag,Tag,Users,Wallet} from "lucide-react";
 const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
 const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format((n||0)/100);
-type Dash={summary:{orders:number;paid_sales:number;gross_sales:number;tax_collected:number;active_orders:number;demo_orders:number};trend:{day:string;sales:number;orders:number}[];sources:{source:string;orders:number;sales:number}[];topItems:{name:string;quantity:number;sales:number}[];lowStock:number;monthExpenses:number;activePromotions:number;estimatedCogs:number;estimatedGrossProfit:number;salesGrowthPct:number|null;previousWeekSales:number};
+type Dash={summary:{orders:number;paid_sales:number;gross_sales:number;tax_collected:number;active_orders:number;demo_orders:number};trend:{day:string;date:string;sales:number;orders:number}[];sources:{source:string;orders:number;sales:number}[];topItems:{name:string;quantity:number;sales:number}[];lowStock:number;monthExpenses:number;activePromotions:number;estimatedCogs:number;estimatedGrossProfit:number;salesGrowthPct:number|null;previousWeekSales:number};
 type Order={id:number;orderNumber:string;source:string;status:string;totalPaise:number;paymentStatus:string;createdAt:string;externalPlatformOrderId?:string|null};
 export default function AdminPage(){
  const [dash,setDash]=useState<Dash|null>(null),[orders,setOrders]=useState<Order[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);
