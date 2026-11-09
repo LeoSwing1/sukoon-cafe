@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, Plus, Minus, ShoppingBag, ReceiptText } from "lucide-react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Item={id:number;name:string;description?:string|null;pricePaise:number;available:boolean;categoryName?:string|null};
 type CafeTable={id:number;tableNumber:string};
 type Source="DINE_IN"|"WALK_IN"|"TAKEAWAY"|"WEBSITE"|"SWIGGY"|"ZOMATO";

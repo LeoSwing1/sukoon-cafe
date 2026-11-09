@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Table={id:number;tableNumber:string;qrToken:string};
 export default function TablesPage(){const [rows,setRows]=useState<Table[]>([]),[number,setNumber]=useState(""),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/tables`,{credentials:"include"});setRows((await r.json()).tables||[])}useEffect(()=>{void load()},[]);

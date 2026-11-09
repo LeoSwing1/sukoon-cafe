@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";const money=(p:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format(Number(p||0)/100);
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");const money=(p:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format(Number(p||0)/100);
 type Booking=any;
 export default function EventBookingsPage(){const [rows,setRows]=useState<Booking[]>([]),[error,setError]=useState(""),[busy,setBusy]=useState<number|null>(null);
  async function load(){try{const r=await fetch(`${API}/api/v1/event-bookings`,{credentials:"include"});const d=await r.json();if(!r.ok)throw Error(d.error);setRows(d.bookings||[])}catch(e){setError(e instanceof Error?e.message:"Could not load bookings")}}

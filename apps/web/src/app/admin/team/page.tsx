@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Staff={id:number;name:string;email:string|null;phone:string|null;role:string;active:boolean};
 export default function TeamPage(){const [staff,setStaff]=useState<Staff[]>([]),[name,setName]=useState(""),[email,setEmail]=useState(""),[phone,setPhone]=useState(""),[role,setRole]=useState("CASHIER"),[password,setPassword]=useState(""),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/staff`,{credentials:"include"});setStaff((await r.json()).staff||[])}useEffect(()=>{void load()},[]);

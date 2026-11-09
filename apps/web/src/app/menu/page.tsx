@@ -1,7 +1,7 @@
  "use client";
 import {useEffect,useMemo,useState} from "react";
 import {Plus,Minus,ShoppingBag,CheckCircle2,MapPin,Clock,Search,ArrowLeft,PartyPopper,Phone,Leaf,Sparkles,Utensils,Cake,GlassWater,Coffee,Flame} from "lucide-react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type MenuItem={id:number;name:string;description:string|null;pricePaise:number;categoryName:string|null;available?:boolean};
 type Table={id:number;tableNumber:string};
 const money=(p:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format(p/100);

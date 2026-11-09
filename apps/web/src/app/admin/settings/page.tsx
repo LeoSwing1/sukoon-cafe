@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Integration={platform:string;enabled:boolean;api_base_url:string|null;webhook_url:string|null;has_api_key:boolean;has_api_secret:boolean;notes:string|null};
 export default function SettingsPage(){const [rows,setRows]=useState<Integration[]>([]),[name,setName]=useState("Sukoon Cafe"),[tax,setTax]=useState("5"),[address,setAddress]=useState("Ashiyana Road, LDA Colony, Lucknow"),[phone,setPhone]=useState(""),[email,setEmail]=useState(""),[hours,setHours]=useState(""),[msg,setMsg]=useState("");
  async function load(){const [i,s]=await Promise.all([fetch(`${API}/api/v1/marketplace-settings`,{credentials:"include"}),fetch(`${API}/api/v1/cafe-settings`,{credentials:"include"})]);setRows((await i.json()).integrations||[]);const d=await s.json();if(d.settings){setName(d.settings.cafeName||"Sukoon Cafe");setAddress(d.settings.address||"");setTax(String((d.settings.taxRateBps||0)/100));setPhone(d.settings.phone||"");setEmail(d.settings.email||"");setHours(d.settings.openingHours||"")}}useEffect(()=>{void load()},[]);

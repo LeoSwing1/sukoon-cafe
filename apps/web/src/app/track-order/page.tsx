@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";import {Search,Clock,CheckCircle2,ChefHat,PackageCheck} from "lucide-react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 const steps=["RECEIVED","ACCEPTED","PREPARING","READY","SERVED","COMPLETED"];
 const labels=["Request received","Accepted by cafe","Being prepared","Ready","Served to customer","Completed"];
 export default function TrackOrder(){const [number,setNumber]=useState(""),[data,setData]=useState<any>(null),[error,setError]=useState(""),[busy,setBusy]=useState(false);

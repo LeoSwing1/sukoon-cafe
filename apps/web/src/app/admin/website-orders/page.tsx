@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useState} from "react";
 import Link from "next/link";
 import {ArrowLeft,Check,Clock,Phone,RefreshCw,X} from "lucide-react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format((n||0)/100);
 export default function WebsiteOrders(){const [orders,setOrders]=useState<any[]>([]),[busy,setBusy]=useState<number|null>(null),[notice,setNotice]=useState("");
  const load=useCallback(async()=>{try{const r=await fetch(`${API}/api/v1/orders/website-pending`,{credentials:"include"});if(!r.ok)throw Error("Could not load pending website orders. Sign in with staff access.");const d=await r.json();setOrders(d.orders||[]);setNotice("")}catch(e){setNotice(e instanceof Error?e.message:"Request failed")}},[]);

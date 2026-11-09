@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";type Row={id:number;platform:string;reference:string|null;gross_paise:number;commission_paise:number;adjustment_paise:number;net_paise:number;settlement_status:string};
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");type Row={id:number;platform:string;reference:string|null;gross_paise:number;commission_paise:number;adjustment_paise:number;net_paise:number;settlement_status:string};
 const money=(n:number)=>`₹${(n/100).toLocaleString("en-IN",{maximumFractionDigits:2})}`;
 export default function SettlementsPage(){const [rows,setRows]=useState<Row[]>([]),[platform,setPlatform]=useState("SWIGGY"),[ref,setRef]=useState(""),[gross,setGross]=useState(""),[fee,setFee]=useState(""),[adjust,setAdjust]=useState("0"),[status,setStatus]=useState("PENDING"),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/settlements`,{credentials:"include"});setRows((await r.json()).settlements||[])}useEffect(()=>{void load()},[]);

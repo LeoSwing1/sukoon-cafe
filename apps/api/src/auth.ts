@@ -3,12 +3,23 @@ import type { Request, Response, NextFunction } from 'express';
 import { pool } from './db/client.js';
 
 const COOKIE='sukoon_session';
-const secret=()=>process.env.AUTH_SECRET || (process.env.NODE_ENV==='production' ? '' : 'local-only-change-this-sukoon-secret-32chars');
+const secret=()=>{
+ const configured=process.env.AUTH_SECRET;
+ if(process.env.NODE_ENV==='production') return configured && configured.length>=32 ? configured : '';
+ return configured || 'local-only-change-this-sukoon-secret-32chars';
+};
 export type Role='OWNER'|'MANAGER'|'CASHIER'|'KITCHEN'|'SERVICE';
 export type SessionUser={id:number;name:string;email:string;role:Role};
 function sign(payload:string){const s=secret();if(!s)throw new Error('AUTH_SECRET must be configured before production use');return createHmac('sha256',s).update(payload).digest('base64url');}
 function hashPassword(password:string,salt=randomBytes(16).toString('hex')){return `${salt}:${scryptSync(password,salt,64).toString('hex')}`;}
-function verifyPassword(password:string,stored:string){const [salt,hash]=stored.split(':');if(!salt||!hash)return false;const actual=scryptSync(password,salt,64),expected=Buffer.from(hash,'hex');return actual.length===expected.length&&timingSafeEqual(actual,expected);}
+function verifyPassword(password:string,stored:string){
+ try {
+  const [salt,hash]=String(stored||'').split(':');
+  if(!salt||!hash||!/^[a-f0-9]{128}$/i.test(hash))return false;
+  const actual=scryptSync(password,salt,64),expected=Buffer.from(hash,'hex');
+  return actual.length===expected.length&&timingSafeEqual(actual,expected);
+ } catch { return false; }
+}
 function cookieValue(req:Request){return (req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1)||'';}
 export function setSession(res:Response,user:SessionUser){const payload=Buffer.from(JSON.stringify({...user,exp:Date.now()+12*60*60*1000})).toString('base64url');const token=`${payload}.${sign(payload)}`;res.setHeader('Set-Cookie',`${COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=43200${process.env.NODE_ENV==='production'?'; Secure':''}`);}
 export function clearSession(res:Response){res.setHeader('Set-Cookie',`${COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${process.env.NODE_ENV==='production'?'; Secure':''}`);}

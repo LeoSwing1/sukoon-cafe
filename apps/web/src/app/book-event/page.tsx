@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 const field="mt-1 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#9a6b49]";
 export default function BookEventPage(){const [form,setForm]=useState({eventType:"BIRTHDAY",eventDate:"",eventTime:"18:00",guestCount:"20",customerName:"",customerPhone:"",customerEmail:"",budget:"",venuePreference:"CAFE",decorationPackage:"Classic decor",foodPackage:"Starters + main course + dessert",cakeCutting:true,musicPackage:"Curated playlist",djRequired:false,specialRequests:""});const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[success,setSuccess]=useState(false);
  function set<K extends keyof typeof form>(k:K,v:typeof form[K]){setForm(x=>({...x,[k]:v}))}

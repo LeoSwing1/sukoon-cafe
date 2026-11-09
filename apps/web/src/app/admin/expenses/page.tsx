@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";type Expense={id:number;category:string;description:string;amount_paise:number;expense_date:string};
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");type Expense={id:number;category:string;description:string;amount_paise:number;expense_date:string};
 const money=(n:number)=>`₹${(n/100).toLocaleString("en-IN",{maximumFractionDigits:2})}`;
 export default function ExpensesPage(){const [rows,setRows]=useState<Expense[]>([]),[category,setCategory]=useState("Ingredients"),[description,setDescription]=useState(""),[amount,setAmount]=useState(""),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/expenses`,{credentials:"include"});setRows((await r.json()).expenses||[])}useEffect(()=>{void load()},[]);

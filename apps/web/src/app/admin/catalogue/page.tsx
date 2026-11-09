@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type {FormEvent} from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Category={id:number;name:string};
 type Item={id:number;name:string;description:string|null;pricePaise:number;costPaise:number;available:boolean;categoryName:string|null;categoryId:number|null};
 export default function CataloguePage(){

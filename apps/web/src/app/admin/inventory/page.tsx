@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Item={id:number;name:string;unit:string;stock_quantity:string;reorder_level:string;unit_cost_paise:number};
 export default function InventoryPage(){const [items,setItems]=useState<Item[]>([]),[name,setName]=useState(""),[unit,setUnit]=useState("pcs"),[qty,setQty]=useState("0"),[reorder,setReorder]=useState("0"),[note,setNote]=useState(""),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/inventory`,{credentials:"include"});const d=await r.json();setItems(d.items||[])}useEffect(()=>{void load()},[]);

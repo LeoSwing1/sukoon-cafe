@@ -11,3 +11,6 @@ coverage
 **/.env.*
 !.env.example
 **/dist/
+**/node_modules/
+**/.next/
+**/.vercel/

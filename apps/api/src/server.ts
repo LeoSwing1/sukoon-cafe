@@ -12,7 +12,17 @@ import { db, pool } from "./db/client.js";
 import { cafeTables, cafeSettings } from "./db/schema.js";
 import { asc, eq } from "drizzle-orm";
 const app=express();const port=Number(process.env.PORT||4100);
-app.use(helmet());app.use(cors({origin:process.env.WEB_ORIGIN||"http://localhost:3000",credentials:true}));app.use(express.json({limit:"1mb"}));
+app.set("trust proxy",1);
+const allowedOrigins=new Set((process.env.WEB_ORIGIN||"http://localhost:3000").split(",").map(value=>value.trim()).filter(Boolean));
+app.use((req,res,next)=>{
+ const started=Date.now();
+ res.on("finish",()=>console.log(JSON.stringify({level:"info",method:req.method,path:req.path,status:res.statusCode,durationMs:Date.now()-started,requestId:req.headers["x-vercel-id"]||null})));
+ next();
+});
+app.use(helmet());
+app.use(cors({origin:(origin,callback)=>callback(null,!origin||allowedOrigins.has(origin)),credentials:true}));
+app.use(express.json({limit:"1mb"}));
+app.get("/",(_req,res)=>res.json({name:"Sukoon Cafe API",status:"online",health:"/health",api:"/api/v1"}));
 app.get("/health",async(_req,res)=>{try{await pool.query("select 1");res.json({ok:true,database:"connected",service:"sukoon-api",timestamp:new Date().toISOString()});}catch{res.status(503).json({ok:false,database:"disconnected",service:"sukoon-api",timestamp:new Date().toISOString()});}});
 app.get("/api/v1",(_req,res)=>res.json({name:"Sukoon Cafe API",version:"1.5.0",status:"owner-and-staff-auth"}));
 app.use("/api/v1/auth",authRouter);
@@ -90,5 +100,9 @@ app.post("/api/v1/settlements",requireAuth("OWNER","MANAGER"),async(req,res,next
 app.get("/api/v1/expenses",requireAuth("OWNER","MANAGER"),async(_req,res,next)=>{try{const r=await pool.query('SELECT * FROM cafe_expenses ORDER BY expense_date DESC,id DESC LIMIT 100');res.json({expenses:r.rows})}catch(e){next(e)}});
 app.post("/api/v1/expenses",requireAuth("OWNER","MANAGER"),async(req,res,next)=>{try{const {category,description,amountPaise,expenseDate}=req.body;if(!category||!description||!Number.isInteger(Number(amountPaise))||Number(amountPaise)<0)return res.status(400).json({error:'Valid category, description and amount are required'});const r=await pool.query('INSERT INTO cafe_expenses(category,description,amount_paise,expense_date) VALUES($1,$2,$3,$4) RETURNING *',[category,description,amountPaise,expenseDate||new Date()]);res.status(201).json({expense:r.rows[0]})}catch(e){next(e)}});
 
-app.use((err:unknown,_req:express.Request,res:express.Response,_next:express.NextFunction)=>{console.error(err);res.status(500).json({error:"Internal server error"});});
+app.use((err:unknown,req:express.Request,res:express.Response,_next:express.NextFunction)=>{
+ console.error(JSON.stringify({level:"error",method:req.method,path:req.path,message:err instanceof Error?err.message:"Unknown API error",requestId:req.headers["x-vercel-id"]||null}));
+ if(res.headersSent)return;
+ res.status(500).json({error:"Internal server error"});
+});
 app.listen(port,()=>console.log(`Sukoon API listening on http://localhost:${port}`));

@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type { FormEvent } from "react";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:4100";
+const API = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100");
 type Promo={id:number;name:string;code:string|null;description:string|null;discount_type:string;discount_value:number;active:boolean};
 export default function PromotionsPage(){const [items,setItems]=useState<Promo[]>([]),[name,setName]=useState(""),[code,setCode]=useState(""),[type,setType]=useState("PERCENT"),[value,setValue]=useState("10"),[description,setDescription]=useState(""),[msg,setMsg]=useState("");
  async function load(){const r=await fetch(`${API}/api/v1/promotions`,{credentials:"include"});setItems((await r.json()).promotions||[])}useEffect(()=>{void load()},[]);
