@@ -15,6 +15,8 @@ type MenuProduct = {
 };
 
 async function seedInitialCafeData(): Promise<void> {
+  console.log('Starting Sukoon Cafe initial data import...');
+
   // This initializer is deliberately production-safe and repeatable.
   // It adds only missing catalogue records, missing tables, and default settings.
   // It does NOT create demo orders, invoices, inventory, staff, expenses,
@@ -153,7 +155,138 @@ async function seedInitialCafeData(): Promise<void> {
    {name:"Gossip Magic Combo",description:"Gossip Maggi + Momos + 2 Chai",price:99,cost:48},
    {name:"Pyaar Ka Punch Combo",description:"2 Mojitos + 2 Momos",price:119,cost:57},
    {name:"Breakup Berry Combo",description:"Momos + Cold Coffee",price:119,cost:55},
+   
+   
    {name:"Single & Sparkling Combo",description:"Maggi + Fries + Couple Goals Combo",price:149,cost:69},
    {name:"Sukoon Splash Combo",description:"Loaded Maggi + Momos + Cold Coffee",price:149,cost:72}
   ]
- }};
+ };
+
+  const result = await db.transaction(async (tx) => {
+    let addedCategories = 0;
+    let addedItems = 0;
+    let addedTables = 0;
+    let createdSettings = false;
+
+    const categoryRows = await tx
+      .select({ id: menuCategories.id, name: menuCategories.name })
+      .from(menuCategories);
+    const categoryIds = new Map<string, number>();
+    for (const category of categoryRows) {
+      categoryIds.set(category.name.trim().toLowerCase(), category.id);
+    }
+
+    const existingItems = await tx
+      .select({ name: menuItems.name })
+      .from(menuItems);
+    const existingItemNames = new Set<string>(
+      existingItems.map((item) => item.name.trim().toLowerCase()),
+    );
+
+    for (const [index, entry] of Object.entries(menuGroups).entries()) {
+      const [groupName, products] = entry;
+      const categoryKey = groupName.trim().toLowerCase();
+      let categoryId = categoryIds.get(categoryKey);
+
+      if (categoryId === undefined) {
+        const [createdCategory] = await tx
+          .insert(menuCategories)
+          .values({
+            name: groupName,
+            sortOrder: index + 1,
+            active: true,
+          })
+          .returning({ id: menuCategories.id });
+
+        if (!createdCategory) {
+          throw new Error(`Failed to create menu category: ${groupName}`);
+        }
+
+        categoryId = createdCategory.id;
+        categoryIds.set(categoryKey, categoryId);
+        addedCategories += 1;
+      }
+
+      if (categoryId === undefined) {
+        throw new Error(`Menu category has no database ID: ${groupName}`);
+      }
+
+      for (const product of products) {
+        const itemKey = product.name.trim().toLowerCase();
+
+        // Do not overwrite an existing item: the owner may have edited its price,
+        // description, category, or availability in the admin panel.
+        if (existingItemNames.has(itemKey)) {
+          continue;
+        }
+
+        await tx.insert(menuItems).values({
+          categoryId,
+          name: product.name,
+          description: product.description,
+          pricePaise: Math.round(product.price * 100),
+          costPaise: Math.round(product.cost * 100),
+          available: true,
+          demoData: false,
+        });
+
+        existingItemNames.add(itemKey);
+        addedItems += 1;
+      }
+    }
+
+    const currentTables = await tx
+      .select({ tableNumber: cafeTables.tableNumber })
+      .from(cafeTables);
+    const existingTableNumbers = new Set<string>(
+      currentTables.map((table) => table.tableNumber.trim()),
+    );
+
+    const missingTables = Array.from({ length: 10 }, (_, index) => String(index + 1))
+      .filter((tableNumber) => !existingTableNumbers.has(tableNumber))
+      .map((tableNumber) => ({
+        tableNumber,
+        qrToken: `sukoon-table-${tableNumber}-${randomBytes(12).toString('hex')}`,
+        active: true,
+      }));
+
+    if (missingTables.length > 0) {
+      await tx.insert(cafeTables).values(missingTables);
+      addedTables = missingTables.length;
+    }
+
+    const existingSettings = await tx
+      .select({ id: cafeSettings.id })
+      .from(cafeSettings)
+      .limit(1);
+
+    if (existingSettings.length === 0) {
+      await tx.insert(cafeSettings).values({
+        cafeName: 'Sukoon Cafe',
+        tagline: 'A little pause. A little sukoon.',
+        address: 'Ashiyana Road, LDA Colony, Lucknow',
+        currency: 'INR',
+        taxRateBps: 0,
+      });
+      createdSettings = true;
+    }
+
+    return { addedCategories, addedItems, addedTables, createdSettings };
+  });
+
+  console.log('Sukoon Cafe initial data import completed.');
+  console.log(`Categories added: ${result.addedCategories}`);
+  console.log(`Menu items added: ${result.addedItems}`);
+  console.log(`Tables added: ${result.addedTables}`);
+  console.log(`Cafe settings created: ${result.createdSettings ? 'yes' : 'no (already existed)'}`);
+  console.log('Existing menu items and owner-managed data were preserved.');
+}
+
+seedInitialCafeData()
+  .catch((error: unknown) => {
+    console.error('Sukoon Cafe initial data import failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await pool.end();
+  });
