@@ -1,0 +1,291 @@
+import { randomBytes } from 'node:crypto';
+import { db, pool } from './client.js';
+import {
+  cafeSettings,
+  cafeTables,
+  menuCategories,
+  menuItems,
+} from './schema.js';
+
+type MenuProduct = {
+  name: string;
+  description: string;
+  price: number; // INR
+  cost: number;  // INR
+};
+
+async function seedInitialCafeData(): Promise<void> {
+  console.log('Starting Sukoon Cafe initial data import...');
+
+  // This initializer is deliberately production-safe and repeatable.
+  // It adds only missing catalogue records, missing tables, and default settings.
+  // It does NOT create demo orders, invoices, inventory, staff, expenses,
+  // suppliers, promotions, settlements, or an owner account.
+
+ const menuGroups: Record<string, MenuProduct[]> = {
+  "Cold Coffee": [
+   {name:"Single & Chilled Cold Coffee",description:"Chilled classic cold coffee",price:59,cost:22},
+   {name:"Pyaar Mein Dooba Cold Coffee",description:"Extra chocolate, extra drama",price:69,cost:28},
+   {name:"Breakup Booster",description:"Strong enough to forget the ex",price:69,cost:27},
+   {name:"Rich Boi Cold Coffee",description:"Because your wallet said no, but your heart said yes",price:69,cost:29},
+   {name:"Cold Coffee, Hot Gossip",description:"Best enjoyed with friends",price:69,cost:27},
+   {name:"Sukoon Special Cold Coffee",description:"Sip. Relax. Repeat.",price:79,cost:32},
+   {name:"Ex Ki Yaad Cold Coffee",description:"Bitter, but addictive",price:89,cost:36}
+  ],
+  "Chai & Adrak": [
+   {name:"Mummy Wali Adrak Chai",description:"No one makes it like her",price:20,cost:7},
+   {name:"Special Elaichi Chai",description:"For the 5-minute break that lasts 2 hours",price:20,cost:8},
+   {name:"Gupshup Adrak Chai",description:"Chai + unlimited bakchodi",price:30,cost:10}
+  ],
+  "Maggi": [
+   {name:"2-Minute Maggi",description:"Takes 5 minutes, obviously",price:30,cost:12},
+   {name:"Buttery Maggi",description:"Simple, emotional & affordable",price:40,cost:16},
+   {name:"Extra Masala Maggi",description:"Extra masala, extra trauma",price:50,cost:19},
+   {name:"Maggi Mein Cheese",description:"Everything.",price:60,cost:25},
+   {name:"Ameeron Ki Maggi",description:"Loaded with everything",price:70,cost:30}
+  ],
+  "Momos": [
+   {name:"Single Veg Momos",description:"Steaming hot momos",price:30,cost:14},
+   {name:"Single Paneer Momos",description:"Steaming paneer momos",price:40,cost:19},
+   {name:"Dhoka Fried Momos (Veg)",description:"Looks innocent, tastes dangerous",price:40,cost:18},
+   {name:"Dhoka Fried Momos (Paneer)",description:"Crispy paneer momos",price:50,cost:23},
+   {name:"Garam Gossip Garlic Momos (Veg)",description:"Hotter than your group chat",price:50,cost:23},
+   {name:"Garam Gossip Garlic Momos (Paneer)",description:"Garlic-loaded paneer momos",price:70,cost:32},
+   {name:"Crush Wale Crunchy Momos (Veg)",description:"You'll keep coming back",price:70,cost:31},
+   {name:"Crush Wale Crunchy Momos (Paneer)",description:"Crunchy paneer momos",price:90,cost:40}
+  ],
+  "Burgers": [
+   {name:"Single Patty Burger",description:"Double feelings, single patty",price:35,cost:17},
+   {name:"Broccoli Cheese Burger",description:"Fresh, cheesy cafe-style burger",price:50,cost:24},
+   {name:"Big Cheese Burger",description:"Big enough to share (or not)",price:80,cost:39},
+   {name:"Ek Burger (Extra Crunch)",description:"A crunchy cafe favourite",price:80,cost:38},
+   {name:"Cheese Kurkure Burger",description:"But worth it",price:110,cost:53}
+  ],
+  "Sandwiches": [
+   {name:"Veg Grilled Sandwich",description:"Mixed vegetables, cheese & seasoning",price:50,cost:23},
+   {name:"Cheese Sandwich",description:"Loaded with melted cheese",price:70,cost:33},
+   {name:"Corn & Cheese Sandwich",description:"Sweet corn, cheese",price:90,cost:42}
+  ],
+  "Mojitos": [
+   {name:"Nimbu Paani With Attitude",description:"Lime and mint",price:69,cost:22},
+   {name:"Not Anymore Mojito",description:"Strawberry, blackcurrant and pomegranate",price:69,cost:28},
+   {name:"Weekend Wala Mojito",description:"Blue paradise, berry blast",price:69,cost:28},
+   {name:"Sukoon Mojito",description:"Sip. Relax. Repeat. (Apple)",price:69,cost:26}
+  ],
+  "Special Tea": [
+   {name:"Kariyapa Tea",description:"A special tea selection",price:69,cost:25},
+   {name:"Grey Tea",description:"A fragrant tea break",price:99,cost:35},
+   {name:"Neela Samandar",description:"A refreshing special tea",price:99,cost:38}
+  ],
+  "Fresh Juices": [
+   {name:"Sweet Lime Juice",description:"Freshly squeezed mosambi",price:89,cost:32},
+   {name:"Orange Sunrise",description:"Fresh orange juice",price:99,cost:38},
+   {name:"Watermelon Cooler",description:"Seasonal watermelon juice",price:79,cost:28},
+   {name:"Pineapple Punch",description:"Tropical pineapple juice",price:99,cost:39},
+   {name:"ABC Detox Juice",description:"Apple, beetroot and carrot",price:119,cost:46}
+  ],
+  "Soft Drinks & Water": [
+   {name:"Coca-Cola",description:"Chilled soft drink · sample listing",price:40,cost:25},
+   {name:"Sprite",description:"Chilled lemon-lime soft drink · sample listing",price:40,cost:25},
+   {name:"Thums Up",description:"Chilled cola · sample listing",price:40,cost:25},
+   {name:"Mineral Water",description:"Packaged drinking water",price:20,cost:10},
+   {name:"Soda",description:"Chilled soda water",price:30,cost:12}
+  ],
+  "Hot Coffee": [
+   {name:"Classic Cappuccino",description:"Espresso with steamed milk foam",price:109,cost:38},
+   {name:"Cafe Latte",description:"Smooth espresso and steamed milk",price:119,cost:42},
+   {name:"Americano",description:"Espresso topped with hot water",price:89,cost:28},
+   {name:"Hot Chocolate",description:"Rich cocoa and steamed milk",price:119,cost:45},
+   {name:"Hazelnut Hot Coffee",description:"Aromatic hazelnut cafe coffee",price:129,cost:48}
+  ],
+  "Fries & Quick Bites": [
+   {name:"Classic Salted Fries",description:"Golden crispy fries",price:69,cost:28},
+   {name:"Peri Peri Fries",description:"Crispy fries with peri peri seasoning",price:89,cost:36},
+   {name:"Cheese Loaded Fries",description:"Fries topped with creamy cheese",price:119,cost:49},
+   {name:"Garlic Bread",description:"Toasted bread with garlic butter",price:89,cost:35},
+   {name:"Cheese Garlic Bread",description:"Garlic bread with melted cheese",price:119,cost:48},
+   {name:"Crispy Veg Nuggets",description:"Crunchy golden vegetable bites",price:99,cost:43}
+  ],
+  "Pizza & Pasta": [
+   {name:"Classic Margherita Pizza",description:"Tomato, mozzarella and basil",price:179,cost:78},
+   {name:"Farmhouse Pizza",description:"Onion, capsicum, tomato and cheese",price:229,cost:102},
+   {name:"Paneer Tikka Pizza",description:"Spiced paneer and peppers",price:249,cost:112},
+   {name:"White Sauce Pasta",description:"Creamy white sauce pasta",price:169,cost:72},
+   {name:"Red Sauce Pasta",description:"Tomato herb sauce pasta",price:159,cost:66},
+   {name:"Pink Sauce Pasta",description:"Creamy tomato sauce pasta",price:189,cost:82}
+  ],
+  "Starters & Small Plates": [
+   {name:"Chilli Potato",description:"Crispy potato tossed in chilli sauce",price:129,cost:54},
+   {name:"Honey Chilli Potato",description:"Sweet, spicy and crunchy",price:149,cost:62},
+   {name:"Veg Manchurian Dry",description:"Vegetable dumplings in Indo-Chinese sauce",price:149,cost:65},
+   {name:"Paneer Chilli",description:"Paneer tossed with peppers and chilli",price:189,cost:86},
+   {name:"Crispy Corn",description:"Crunchy corn with herbs and spices",price:139,cost:58},
+   {name:"Spring Rolls",description:"Crispy vegetable spring rolls",price:119,cost:50}
+  ],
+  "Main Course": [
+   {name:"Dal Tadka",description:"Yellow lentils tempered with spices",price:149,cost:62},
+   {name:"Shahi Paneer",description:"Paneer in a rich creamy gravy",price:219,cost:96},
+   {name:"Kadai Paneer",description:"Paneer with peppers and kadai masala",price:219,cost:94},
+   {name:"Mix Veg",description:"Seasonal vegetables in Indian masala",price:179,cost:74},
+   {name:"Chole Masala",description:"North Indian chickpea curry",price:159,cost:66},
+   {name:"Jeera Rice",description:"Basmati rice tempered with cumin",price:119,cost:45},
+   {name:"Veg Pulao",description:"Fragrant rice with vegetables",price:149,cost:58},
+   {name:"Butter Naan",description:"Soft tandoor-style naan with butter",price:45,cost:17},
+   {name:"Tawa Roti",description:"Whole wheat flatbread",price:20,cost:7}
+  ],
+  "Desserts & Cakes": [
+   {name:"Chocolate Brownie",description:"Fudgy chocolate brownie",price:99,cost:42},
+   {name:"Sizzling Brownie",description:"Warm brownie with ice cream",price:179,cost:78},
+   {name:"Chocolate Truffle Pastry",description:"Rich chocolate layered pastry",price:99,cost:44},
+   {name:"Red Velvet Pastry",description:"Soft red velvet slice",price:119,cost:52},
+   {name:"Blueberry Cheesecake",description:"Creamy cheesecake slice",price:159,cost:72},
+   {name:"Choco Lava Cake",description:"Warm cake with molten centre",price:119,cost:49},
+   {name:"Gulab Jamun (2 pcs)",description:"Warm milk-solid dumplings in syrup",price:69,cost:26},
+   {name:"Vanilla Scoop",description:"One scoop of vanilla ice cream",price:49,cost:18},
+   {name:"Chocolate Scoop",description:"One scoop of chocolate ice cream",price:59,cost:22}
+  ],
+  "Breakfast & All Day": [
+   {name:"Aloo Paratha with Curd",description:"Stuffed paratha served with curd",price:99,cost:42},
+   {name:"Masala Cheese Toast",description:"Toasted bread with spiced cheese",price:89,cost:36},
+   {name:"Veg Poha",description:"Light flattened rice with peanuts",price:69,cost:25},
+   {name:"Classic Pancakes",description:"Fluffy pancakes with syrup",price:129,cost:54}
+  ],
+  "Funny Mocktail Combos": [
+   {name:"Budget Mocktail + Maggi Combo",description:"Budget mocktail + Maggi + gossip session",price:99,cost:48},
+   {name:"Gossip Magic Combo",description:"Gossip Maggi + Momos + 2 Chai",price:99,cost:48},
+   {name:"Pyaar Ka Punch Combo",description:"2 Mojitos + 2 Momos",price:119,cost:57},
+   {name:"Breakup Berry Combo",description:"Momos + Cold Coffee",price:119,cost:55},
+   
+   {name:"Single & Sparkling Combo",description:"Maggi + Fries + Couple Goals Combo",price:149,cost:69},
+   {name:"Sukoon Splash Combo",description:"Loaded Maggi + Momos + Cold Coffee",price:149,cost:72}
+  ]
+ };
+
+  const result = await db.transaction(async (tx) => {
+    let addedCategories = 0;
+    let addedItems = 0;
+    let addedTables = 0;
+    let createdSettings = false;
+
+    const categoryRows = await tx
+      .select({ id: menuCategories.id, name: menuCategories.name })
+      .from(menuCategories);
+    const categoryIds = new Map<string, number>();
+    for (const category of categoryRows) {
+      categoryIds.set(category.name.trim().toLowerCase(), category.id);
+    }
+
+    const existingItems = await tx
+      .select({ name: menuItems.name })
+      .from(menuItems);
+    const existingItemNames = new Set<string>(
+      existingItems.map((item) => item.name.trim().toLowerCase()),
+    );
+
+    for (const [index, entry] of Object.entries(menuGroups).entries()) {
+      const [groupName, products] = entry;
+      const categoryKey = groupName.trim().toLowerCase();
+      let categoryId = categoryIds.get(categoryKey);
+
+      if (categoryId === undefined) {
+        const [createdCategory] = await tx
+          .insert(menuCategories)
+          .values({
+            name: groupName,
+            sortOrder: index + 1,
+            active: true,
+          })
+          .returning({ id: menuCategories.id });
+
+        if (!createdCategory) {
+          throw new Error(`Failed to create menu category: ${groupName}`);
+        }
+
+        categoryId = createdCategory.id;
+        categoryIds.set(categoryKey, categoryId);
+        addedCategories += 1;
+      }
+
+      if (categoryId === undefined) {
+        throw new Error(`Menu category has no database ID: ${groupName}`);
+      }
+
+      for (const product of products) {
+        const itemKey = product.name.trim().toLowerCase();
+
+        // Do not overwrite an existing item: the owner may have edited its price,
+        // description, category, or availability in the admin panel.
+        if (existingItemNames.has(itemKey)) {
+          continue;
+        }
+
+        await tx.insert(menuItems).values({
+          categoryId,
+          name: product.name,
+          description: product.description,
+          pricePaise: Math.round(product.price * 100),
+          costPaise: Math.round(product.cost * 100),
+          available: true,
+          demoData: false,
+        });
+
+        existingItemNames.add(itemKey);
+        addedItems += 1;
+      }
+    }
+
+    const currentTables = await tx
+      .select({ tableNumber: cafeTables.tableNumber })
+      .from(cafeTables);
+    const existingTableNumbers = new Set<string>(
+      currentTables.map((table) => table.tableNumber.trim()),
+    );
+
+    const missingTables = Array.from({ length: 10 }, (_, index) => String(index + 1))
+      .filter((tableNumber) => !existingTableNumbers.has(tableNumber))
+      .map((tableNumber) => ({
+        tableNumber,
+        qrToken: `sukoon-table-${tableNumber}-${randomBytes(12).toString('hex')}`,
+        active: true,
+      }));
+
+    if (missingTables.length > 0) {
+      await tx.insert(cafeTables).values(missingTables);
+      addedTables = missingTables.length;
+    }
+
+    const existingSettings = await tx
+      .select({ id: cafeSettings.id })
+      .from(cafeSettings)
+      .limit(1);
+
+    if (existingSettings.length === 0) {
+      await tx.insert(cafeSettings).values({
+        cafeName: 'Sukoon Cafe',
+        tagline: 'A little pause. A little sukoon.',
+        address: 'Ashiyana Road, LDA Colony, Lucknow',
+        currency: 'INR',
+        taxRateBps: 0,
+      });
+      createdSettings = true;
+    }
+
+    return { addedCategories, addedItems, addedTables, createdSettings };
+  });
+
+  console.log('Sukoon Cafe initial data import completed.');
+  console.log(`Categories added: ${result.addedCategories}`);
+  console.log(`Menu items added: ${result.addedItems}`);
+  console.log(`Tables added: ${result.addedTables}`);
+  console.log(`Cafe settings created: ${result.createdSettings ? 'yes' : 'no (already existed)'}`);
+  console.log('Existing menu items and owner-managed data were preserved.');
+}
+
+seedInitialCafeData()
+  .catch((error: unknown) => {
+    console.error('Sukoon Cafe initial data import failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await pool.end();
+  });

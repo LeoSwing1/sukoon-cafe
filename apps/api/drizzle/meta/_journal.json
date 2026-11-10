@@ -50,6 +50,13 @@
       "when": 1794003600000,
       "tag": "0006_dine_in_rounds",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794295709755,
+      "tag": "0007_table_reservations",
+      "breakpoints": true
     }
   ]
 }

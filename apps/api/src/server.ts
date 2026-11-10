@@ -7,6 +7,7 @@ const helmet = helmetModule as unknown as () => express.RequestHandler;
 import { menuRouter, categoriesRouter } from "./routes/menu.js";
 import { ordersRouter } from "./routes/orders.js";
 import { authRouter } from "./routes/auth.js";
+import { tableReservationsRouter } from "./routes/reservations.js";
 import { requireAuth, makePassword, readSession } from "./auth.js";
 import { db, pool } from "./db/client.js";
 import { cafeTables, cafeSettings } from "./db/schema.js";
@@ -26,6 +27,7 @@ app.get("/",(_req,res)=>res.json({name:"Sukoon Cafe API",status:"online",health:
 app.get("/health",async(_req,res)=>{try{await pool.query("select 1");res.json({ok:true,database:"connected",service:"sukoon-api",timestamp:new Date().toISOString()});}catch{res.status(503).json({ok:false,database:"disconnected",service:"sukoon-api",timestamp:new Date().toISOString()});}});
 app.get("/api/v1",(_req,res)=>res.json({name:"Sukoon Cafe API",version:"1.5.0",status:"owner-and-staff-auth"}));
 app.use("/api/v1/auth",authRouter);
+app.use("/api/v1/table-reservations",tableReservationsRouter);
 app.use("/api/v1/menu-items",menuRouter);app.use("/api/v1/menu-categories",categoriesRouter);app.use("/api/v1/orders",ordersRouter);
 
 // Event and celebration bookings: enquiries are stored for staff follow-up; no payment is taken online.
