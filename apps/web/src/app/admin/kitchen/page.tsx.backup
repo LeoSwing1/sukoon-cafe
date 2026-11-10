@@ -1,0 +1,95 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  ChefHat,
+  CheckCircle2,
+  Clock3,
+  IndianRupee,
+  Printer,
+  ReceiptText,
+  RefreshCw,
+  ShoppingBag,
+  X,
+} from "lucide-react";
+
+// In production, Next.js rewrites /api/* to the API deployment.
+const API =
+  process.env.NODE_ENV === "production"
+    ? ""
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100";
+
+type PaymentMethod =
+  | "CASH"
+  | "UPI"
+  | "CARD"
+  | "ONLINE"
+  | "SWIGGY"
+  | "ZOMATO"
+  | "OTHER";
+
+type PaymentStatus = "PENDING" | "PAID" | "PARTIAL";
+
+type Line = {
+  id: number;
+  itemNameSnapshot: string;
+  quantity: number;
+  notes?: string | null;
+  kitchenStatus?: string;
+};
+
+type Order = {
+  id: number;
+  orderNumber: string;
+  source: string;
+  status: string;
+  createdAt: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  externalPlatformOrderId?: string | null;
+  lines?: Line[];
+  table?: { tableNumber: string } | null;
+  orderNotes?: string | null;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: string | null;
+  totalPaise?: number;
+};
+
+type OrderDetailResponse = {
+  order?: Order;
+  lines?: Line[];
+  table?: { tableNumber: string } | null;
+};
+
+const columns = [
+  {
+    status: "PREPARING",
+    title: "Making now",
+    helper: "KOT printed · preparing",
+    tone: "border-amber-200 bg-amber-50 text-amber-900",
+  },
+  {
+    status: "READY",
+    title: "Ready for pickup",
+    helper: "Waiting for service / handover",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  },
+  {
+    status: "SERVED",
+    title: "Served",
+    helper: "Handed over · bill and payment",
+    tone: "border-stone-200 bg-white text-stone-700",
+  },
+] as const;
+
+const money = (paise: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format((Number(paise) || 0) / 100);
+
+async function readApiError(response: Response, fallback: string) {
+  const raw = await response.text().catch(() => "");
+  if (!raw) return `${fallback} (${response.status})`};
