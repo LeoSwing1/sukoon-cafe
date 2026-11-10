@@ -65,12 +65,12 @@ ordersRouter.patch('/:id/edit',requireAuth('OWNER','MANAGER','CASHIER'),async(re
       await tx.delete(orderItems).where(eq(orderItems.orderId,id));
       await tx.insert(orderItems).values(nextLines);
       const [updated]=await tx.update(orders).set({
-        subtotalPaise,discountPaise,taxPaise,totalPaise,discountType,discountValue,
+        subtotalPaise:subtotal,discountPaise,taxPaise,totalPaise,discountType,discountValue,
         customerName:v.customerName?.trim()||null,customerPhone:v.customerPhone?.trim()||null,
         deliveryAddress:v.deliveryAddress?.trim()||null,orderNotes:v.orderNotes?.trim()||null,
         paymentMethod:v.paymentMethod??current.paymentMethod,paymentStatus:v.paymentStatus??current.paymentStatus
       }).where(eq(orders.id,id)).returning();
-      await tx.update(invoices).set({subtotalPaise,discountPaise,taxPaise,totalPaise,paymentStatus:v.paymentStatus??current.paymentStatus}).where(eq(invoices.orderId,id));
+      await tx.update(invoices).set({subtotalPaise:subtotal,discountPaise,taxPaise,totalPaise,paymentStatus:v.paymentStatus??current.paymentStatus}).where(eq(invoices.orderId,id));
       await tx.insert(auditLogs).values({actorUserId:(req as any).user?.id??null,action:'ORDER_BILL_EDITED',entityType:'ORDER',entityId:String(id),details:JSON.stringify({itemCount:nextLines.length,totalPaise,actor:(req as any).user?.name??'Unknown'})});
       return {order:updated,lines:nextLines};
     });
