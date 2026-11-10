@@ -1,22 +1,41 @@
-SUKOON CAFE — API IMPLEMENTATION ADD-ON
+SUKOON CAFE — KITCHEN QUICK ACTIONS
 
-This add-on contains Express route modules for menu management and order management.
+This ZIP is structured to extract directly into your project root:
+C:\CURRENT-PROJECTS\sukoon-cafe
 
-Menu endpoints:
-GET /api/v1/menu-items
-POST /api/v1/menu-items
-PATCH /api/v1/menu-items/:id
+Included files:
+- apps/web/src/app/admin/kitchen/page.tsx
+  Complete replacement for the Kitchen Board UI.
+- apply-kitchen-quick-actions.cjs
+  Adds POST /api/v1/orders/:id/pickup to apps/api/src/routes/orders.ts.
 
-Order endpoints:
-GET /api/v1/orders
-POST /api/v1/orders
+Apply:
 
-Order creation validates source and line items, requires the external order ID for Swiggy/Zomato manual entry, calculates tax/discount/total on the server, snapshots item names/prices, and writes the order and lines in one database transaction.
+1. From CMD, back up current files:
+   cd /d C:\CURRENT-PROJECTS\sukoon-cafe
+   copy apps\web\src\app\admin\kitchen\page.tsx apps\web\src\app\admin\kitchen\page.tsx.backup
+   copy apps\api\src\routes\orders.ts apps\api\src\routes\orders.ts.backup
 
-Integration into the starter:
-1. Copy apps/api/src/routes into the matching location in the starter project.
-2. Import menuRouter and ordersRouter in apps/api/src/server.ts.
-3. Mount them with app.use('/api/v1/menu-items', menuRouter) and app.use('/api/v1/orders', ordersRouter).
-4. Ensure the DB schema exports `items`, `categories`, `orders`, and `orderLines` with the fields used by these routes.
+2. Extract this ZIP directly into the project root and allow the Kitchen page to be replaced.
 
-This is not production-ready by itself. Authentication/authorization, idempotency keys, rate limits, platform webhook integration, payment reconciliation, receipt printing, audit trails, backup/export jobs and automated tests must be added before live use. Never delete financial source records after 10 days; retain invoices and accounting evidence according to applicable requirements.
+3. Run the API patch script from the project root:
+   node apply-kitchen-quick-actions.cjs
+
+4. Build:
+   npm run build
+
+5. Test locally before committing.
+
+Workflow:
+- PREPARING: Kitchen staff can tap Mark Ready. Uses the existing PATCH /orders/:id/status endpoint.
+- READY: Cashier/service can tap Picked Up & Collect Payment.
+- The confirmation dialog records either PAID (with selected method) or PENDING and moves READY -> SERVED in one database transaction.
+- SERVED with PENDING payment shows Collect Payment for cashier/service.
+- The existing invoice print workflow continues to move the order to COMPLETED.
+- Payment collection is manually confirmed by staff. This does not charge a card or UPI account automatically.
+
+Permissions:
+- Mark Ready uses the existing status endpoint and is available to OWNER, MANAGER, CASHIER, KITCHEN and SERVICE as defined by that endpoint.
+- Pickup/payment endpoint is limited to OWNER, MANAGER, CASHIER and SERVICE. KITCHEN users see a waiting note instead.
+
+No database schema change or migration is required. The endpoint uses existing orders, invoices, order_status_events and audit_logs tables.
